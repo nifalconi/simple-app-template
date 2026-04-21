@@ -214,6 +214,20 @@ public/
 - Network calls optional (enhancement only). App must work offline.
 - Assets live in [public/](public/); code lives in [src/](src/).
 
+## Agent-ready (`.claude/`)
+
+This template ships AI-collab context so Claude Code (or any agent that reads the repo) can work with the template's invariants without you re-explaining them every session.
+
+- [CLAUDE.md](CLAUDE.md) — root briefing, auto-loaded by Claude Code on any prompt in this repo
+- [.claude/rules/invariants.md](.claude/rules/invariants.md) — hard rules the agent must never break
+- [.claude/rules/code-style.md](.claude/rules/code-style.md) — TypeScript, React, import conventions
+- [.claude/rules/design-language.md](.claude/rules/design-language.md) — palette, typography, spacing, motion
+- [.claude/skills/add-capability.md](.claude/skills/add-capability.md) — recipe for new `src/lib/*.ts` + Dev panel row
+- [.claude/skills/rebrand.md](.claude/skills/rebrand.md) — change name/colors/icon without touching feature code
+- [.claude/skills/add-screen.md](.claude/skills/add-screen.md) — add a third screen within the 2–3 screen cap
+
+Open this repo in Claude Code and it picks up `CLAUDE.md` automatically. Ask it to "rebrand to X" or "add a clipboard capability" and it follows the skill recipes.
+
 ## Related
 
 - [CLOUD_RULES.md](CLOUD_RULES.md) — invariants for code-driven app generation.
