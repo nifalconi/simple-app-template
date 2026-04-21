@@ -19,15 +19,25 @@ Two paths. Both work.
 
 **Path A — Just clone it and code.** Click **Use this template** on GitHub (or fork), name your repo, and go. No AI required — this is a plain Vite + React + TypeScript project.
 
-**Path B — Design first with Claude Design, then implement.** This template was itself built this way.
+**Path B — Vibe-code it with Claude skills and agents.** The common lane now. You describe what you want in plain language; an agent writes the code against this template's scaffolding.
+
+1. Create your repo from this template (**Use this template** on GitHub).
+2. Clone it locally and open it in [Claude Code](https://docs.claude.com/en/docs/claude-code) (or Cursor, Windsurf — any agent that understands the repo).
+3. Tell the agent what your app does. Example: *"turn this template into a water-intake tracker. One screen: a big number with + / − buttons. Persist the count to localStorage. Reset at midnight."*
+4. The agent rewrites [src/Home.tsx](src/Home.tsx) and the parts of [src/App.tsx](src/App.tsx) it needs. The splash, theme, settings, install button, and deploy workflow stay untouched.
+5. Run `npm run dev`, iterate with the agent, push to `main`, ship.
+
+Use Claude's [skills](https://docs.claude.com/en/docs/claude-code/plugins) (`/skills`) to accelerate repeat tasks — commits, PR reviews, test generation — without retyping the same prompts.
+
+**Path C — Design first with Claude Design, then implement.** This template was built this way.
 
 1. Mock your app's screens in [Claude Design](https://claude.ai/design). Chat your way to a clickable prototype.
 2. From the design, export the handoff bundle (HTML/CSS/JS) or copy the share URL.
 3. Create a new repo from this template (**Use this template** button on GitHub).
-4. Hand the design bundle or URL to a coding agent (Claude Code, Cursor, whatever) and say: *"based on this design, implement it in this template."* The agent ports the design into `src/App.tsx` + screen components, keeping the splash, theme, install, and deploy plumbing untouched.
+4. Hand the design bundle URL to a coding agent and say: *"based on this design, implement it in this template."* The agent ports the design into `src/App.tsx` + screen components, keeping the splash, theme, install, and deploy plumbing untouched.
 5. Push to `main`, enable Pages, ship.
 
-Claude Design is **not** required — the template is self-sufficient. But if you've already mocked something there, this is the fastest lane from prototype to installed-on-your-phone.
+Claude Design is **not** required — the template is self-sufficient. It's an optional polish layer when you want to iterate on UI visually before writing code.
 
 ## Local development
 
