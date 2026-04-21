@@ -379,14 +379,17 @@ function ResetSection({ theme }: { theme: Theme }) {
 interface DevPanelProps {
   visible: boolean;
   theme: Theme;
+  onClose: () => void;
 }
 
-export default function DevPanel({ visible, theme }: DevPanelProps) {
+export default function DevPanel({ visible, theme, onClose }: DevPanelProps) {
   if (!visible) return null;
 
   const isDark = theme === "dark";
+  const appBg = isDark ? "#1F1E1A" : "#F6F1E8";
   const cardBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.65)";
   const border = isDark ? "0.5px solid rgba(255,255,255,0.08)" : "0.5px solid rgba(58,58,54,0.06)";
+  const fg = isDark ? "#E9E4D7" : "#3A3A36";
   const muted = isDark ? "rgba(233,228,215,0.5)" : "#3A3A3680";
 
   const Card = ({ title, children }: { title: string; children: ReactNode }) => (
@@ -399,17 +402,55 @@ export default function DevPanel({ visible, theme }: DevPanelProps) {
   );
 
   return (
-    <>
-      <Card title="Dev · Capabilities"><CapabilitiesSection theme={theme} /></Card>
-      <Card title="Dev · Storage"><StorageSection theme={theme} /></Card>
-      <Card title="Dev · Service Worker"><ServiceWorkerSection theme={theme} /></Card>
-      <Card title="Dev · PWA"><PwaStateSection theme={theme} /></Card>
-      <Card title="Dev · Viewport"><ViewportSection theme={theme} /></Card>
-      <Card title="Dev · Build"><BuildInfoSection theme={theme} /></Card>
-      <Card title="Dev · Danger zone"><ResetSection theme={theme} /></Card>
-      <div style={{ fontSize: 11, color: muted, marginBottom: 20, paddingLeft: 4, lineHeight: 1.5 }}>
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 150,
+      background: appBg,
+      fontFamily: '"Geist", -apple-system, system-ui, sans-serif',
+      color: fg,
+      overflowY: "auto",
+      padding: "0 20px",
+    }}>
+      {/* top bar: title + commit tag + close */}
+      <div style={{
+        position: "sticky", top: 0, zIndex: 10,
+        background: appBg,
+        paddingTop: 62, paddingBottom: 24,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+          <div style={{ fontSize: 28, fontWeight: 400, letterSpacing: -0.6 }}>Dev</div>
+          <div style={{
+            fontSize: 11, letterSpacing: 1, textTransform: "uppercase",
+            color: muted, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+          }}>{__APP_COMMIT__}</div>
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            width: 36, height: 36, borderRadius: 999,
+            background: isDark ? "rgba(255,255,255,0.08)" : "rgba(58,58,54,0.06)",
+            border: "none", cursor: "pointer", padding: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+          title="Close dev panel"
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12">
+            <path d="M2 2l8 8M10 2l-8 8" stroke={fg} strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <Card title="Capabilities"><CapabilitiesSection theme={theme} /></Card>
+      <Card title="Storage"><StorageSection theme={theme} /></Card>
+      <Card title="Service Worker"><ServiceWorkerSection theme={theme} /></Card>
+      <Card title="PWA"><PwaStateSection theme={theme} /></Card>
+      <Card title="Viewport"><ViewportSection theme={theme} /></Card>
+      <Card title="Build"><BuildInfoSection theme={theme} /></Card>
+      <Card title="Danger zone"><ResetSection theme={theme} /></Card>
+
+      <div style={{ fontSize: 11, color: muted, marginBottom: 40, paddingLeft: 4, lineHeight: 1.5 }}>
         Capabilities dormant by default. Imports: <code>src/lib/haptics.ts</code>, <code>src/lib/audio.ts</code>, <code>src/lib/notifications.ts</code>. Wire them into your fork's logic when needed.
       </div>
-    </>
+    </div>
   );
 }

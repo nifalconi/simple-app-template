@@ -224,7 +224,7 @@ export default function SettingsScreen({ state, update, accents, theme, onClose 
         </div>
       </div>
 
-      <DevPanel visible={devVisible} theme={theme} />
+      <DevPanel visible={devVisible} theme={theme} onClose={() => setDevVisible(false)} />
 
       <button
         onClick={onDevTap}
