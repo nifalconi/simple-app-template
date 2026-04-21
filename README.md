@@ -13,6 +13,27 @@ This is that template. Vite + React + TypeScript + `vite-plugin-pwa`, hosted fre
 - **Nice and simple.** Calm design, clear hierarchy, no dark patterns. Make something you'd want to open.
 - **Share it. Be nice.** Ship it publicly, link friends, don't sell them anything.
 
+## Features
+
+Support matrix for everything the template ships with. Verified — not aspirational.
+
+| Feature | Description | Available | iOS Safari | Android Chrome |
+| --- | --- | :-: | :-: | :-: |
+| PWA Install | Add to home screen, run in own window | ✅ | ⚠️ manual (Share → Add) | ✅ native prompt |
+| Offline cache | App works without network after first visit | ✅ | ✅ | ✅ |
+| Light / Dark / Auto theme | Follows system or forced by user | ✅ | ✅ | ✅ |
+| Accent colors | 4 palettes (sage, blue, lavender, beige) | ✅ | ✅ | ✅ |
+| `localStorage` persistence | User prefs survive reloads | ✅ | ✅ | ✅ |
+| Haptics (Vibration API) | Tactile feedback on interactions | ✅ | ❌ ignored | ✅ |
+| Audio (Web Audio oscillators) | Beeps, chimes, alarms — no audio files | ✅ | ✅ (after first tap) | ✅ |
+| Notifications | OS-level notification popups | ✅ | ⚠️ installed PWA only | ✅ |
+| Daily reminder | Schedule chime + notification on selected days/hour | ✅ | ✅ open tab | ✅ open tab |
+| Reminder while app closed | Fire even when tab is closed | ❌ | ❌ needs push server | ❌ needs push server |
+| Dev panel | Hidden diagnostics overlay (triple-tap `v1.0`) | ✅ | ✅ | ✅ |
+| Auto-deploy to GitHub Pages | Push to `main` → live in ~60s | ✅ | n/a | n/a |
+
+Legend: ✅ works · ⚠️ works with caveat · ❌ not supported on this platform.
+
 ## What the template gives you
 
 - **Splash + theme + accent** — light / dark / auto + four accent colors, persisted to `localStorage`.

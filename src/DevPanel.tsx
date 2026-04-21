@@ -3,7 +3,8 @@
 // in-app so you can debug on a phone or an installed PWA.
 
 import { useEffect, useState, type ReactNode } from "react";
-import type { Theme } from "./constants.ts";
+import type { Theme, Reminder } from "./constants.ts";
+import { DAY_LABELS } from "./constants.ts";
 import { hapticsSupported, pulse } from "./lib/haptics.ts";
 import { audioSupported, chime, alarm } from "./lib/audio.ts";
 import {
@@ -13,6 +14,7 @@ import {
   notify,
   type PermissionState,
 } from "./lib/notifications.ts";
+import { nextFireTime, formatNextFire } from "./lib/reminder.ts";
 
 // ─────────────────────────────────────────────────────────────
 // Shared bits (local — don't leak into Settings.tsx)
@@ -122,6 +124,118 @@ function CapabilitiesSection({ theme }: { theme: Theme }) {
         <ActionBtn onClick={() => { void onNotifClick(); }} disabled={!notificationsSupported() || notifPerm === "denied"} theme={theme}>{notifLabel}</ActionBtn>
       </div>
     </Row>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Section: Reminders
+// ─────────────────────────────────────────────────────────────
+
+interface RemindersSectionProps {
+  theme: Theme;
+  reminder: Reminder;
+  update: (r: Reminder) => void;
+}
+
+function RemindersSection({ theme, reminder, update }: RemindersSectionProps) {
+  const isDark = theme === "dark";
+  const fg = isDark ? "#E9E4D7" : "#3A3A36";
+
+  const toggleDay = (d: number): void => {
+    const days = reminder.days.includes(d)
+      ? reminder.days.filter(x => x !== d)
+      : [...reminder.days, d].sort((a, b) => a - b);
+    update({ ...reminder, days });
+  };
+
+  const toggleEnabled = async (): Promise<void> => {
+    const next = !reminder.enabled;
+    if (next && notificationsSupported() && Notification.permission === "default") {
+      await requestPermission();
+    }
+    update({ ...reminder, enabled: next });
+  };
+
+  const fireNow = (): void => {
+    chime();
+    if (notificationsSupported() && Notification.permission === "granted") {
+      notify("Reminder test", { body: "This is what a scheduled reminder looks like." });
+    }
+  };
+
+  const next = nextFireTime(reminder);
+
+  return (
+    <>
+      <Row label="Daily reminder" theme={theme}>
+        <button
+          onClick={() => { void toggleEnabled(); }}
+          style={{
+            width: 44, height: 26, borderRadius: 999, border: "none",
+            background: reminder.enabled
+              ? (isDark ? "#B8C4A9" : "#3A3A36")
+              : (isDark ? "rgba(255,255,255,0.14)" : "rgba(58,58,54,0.14)"),
+            position: "relative", cursor: "pointer", padding: 0,
+            transition: "background 200ms ease",
+          }}
+        >
+          <span style={{
+            position: "absolute", top: 3, left: reminder.enabled ? 21 : 3,
+            width: 20, height: 20, borderRadius: "50%",
+            background: isDark ? "#F6F1E8" : "#fff",
+            transition: "left 200ms cubic-bezier(0.3, 0, 0.3, 1)",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+          }} />
+        </button>
+      </Row>
+      <Row label="Days" theme={theme}>
+        <div style={{ display: "flex", gap: 4 }}>
+          {DAY_LABELS.map((lbl, i) => {
+            const active = reminder.days.includes(i);
+            return (
+              <button
+                key={i}
+                onClick={() => toggleDay(i)}
+                aria-label={`Toggle day ${i}`}
+                style={{
+                  width: 26, height: 26, borderRadius: "50%", border: "none",
+                  background: active
+                    ? (isDark ? "#E9E4D7" : "#3A3A36")
+                    : (isDark ? "rgba(255,255,255,0.06)" : "rgba(58,58,54,0.06)"),
+                  color: active
+                    ? (isDark ? "#1F1E1A" : "#F6F1E8")
+                    : fg,
+                  fontFamily: "inherit", fontSize: 11, fontWeight: 500,
+                  cursor: "pointer", padding: 0,
+                }}
+              >{lbl}</button>
+            );
+          })}
+        </div>
+      </Row>
+      <Row label="Time" theme={theme}>
+        <select
+          value={reminder.hour}
+          onChange={e => update({ ...reminder, hour: Number(e.target.value) })}
+          style={{
+            padding: "6px 10px", borderRadius: 10, border: "none",
+            background: isDark ? "rgba(255,255,255,0.08)" : "rgba(58,58,54,0.06)",
+            color: fg, fontFamily: "inherit", fontSize: 12,
+            cursor: "pointer",
+          }}
+        >
+          {Array.from({ length: 24 }, (_, h) => (
+            <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
+          ))}
+        </select>
+      </Row>
+      <Row label="Next fire" theme={theme}>
+        <Mono muted theme={theme}>{formatNextFire(next)}</Mono>
+      </Row>
+      <Row label="Fire now" last theme={theme}>
+        <ActionBtn onClick={fireNow} disabled={!audioSupported()} theme={theme}>Test</ActionBtn>
+      </Row>
+    </>
   );
 }
 
@@ -380,9 +494,11 @@ interface DevPanelProps {
   visible: boolean;
   theme: Theme;
   onClose: () => void;
+  reminder: Reminder;
+  updateReminder: (r: Reminder) => void;
 }
 
-export default function DevPanel({ visible, theme, onClose }: DevPanelProps) {
+export default function DevPanel({ visible, theme, onClose, reminder, updateReminder }: DevPanelProps) {
   if (!visible) return null;
 
   const isDark = theme === "dark";
@@ -441,6 +557,7 @@ export default function DevPanel({ visible, theme, onClose }: DevPanelProps) {
       </div>
 
       <Card title="Capabilities"><CapabilitiesSection theme={theme} /></Card>
+      <Card title="Reminders"><RemindersSection theme={theme} reminder={reminder} update={updateReminder} /></Card>
       <Card title="Storage"><StorageSection theme={theme} /></Card>
       <Card title="Service Worker"><ServiceWorkerSection theme={theme} /></Card>
       <Card title="PWA"><PwaStateSection theme={theme} /></Card>
