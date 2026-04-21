@@ -11,6 +11,7 @@ import {
   notify,
   type PermissionState,
 } from "./lib/notifications.ts";
+import { audioSupported, chime, alarm } from "./lib/audio.ts";
 
 interface SettingItemProps {
   label: string;
@@ -105,6 +106,8 @@ export default function SettingsScreen({ state, update, accents, theme, onClose 
   };
 
   const onTestHaptics = (): void => { pulse("medium"); };
+  const onTestChime = (): void => { chime(); };
+  const onTestAlarm = (): void => { alarm(4); };
 
   const onInstallClick = async (): Promise<void> => {
     if (pwaInstalled) return;
@@ -262,6 +265,32 @@ export default function SettingsScreen({ state, update, accents, theme, onClose 
                 }}
               >{hapticsSupported() ? "Test pulse" : "Unsupported"}</button>
             </SettingItem>
+            <SettingItem label="Sound" theme={theme}>
+              <button
+                onClick={onTestChime}
+                disabled={!audioSupported()}
+                style={{
+                  padding: "8px 14px", borderRadius: 999, border: "none",
+                  background: audioSupported() ? (isDark ? "#E9E4D7" : "#3A3A36") : (isDark ? "rgba(255,255,255,0.06)" : "rgba(58,58,54,0.06)"),
+                  color: audioSupported() ? (isDark ? "#1F1E1A" : "#F6F1E8") : muted,
+                  fontFamily: "inherit", fontSize: 12, fontWeight: 500,
+                  cursor: audioSupported() ? "pointer" : "default",
+                }}
+              >{audioSupported() ? "Test chime" : "Unsupported"}</button>
+            </SettingItem>
+            <SettingItem label="Alarm" theme={theme}>
+              <button
+                onClick={onTestAlarm}
+                disabled={!audioSupported()}
+                style={{
+                  padding: "8px 14px", borderRadius: 999, border: "none",
+                  background: audioSupported() ? (isDark ? "#E9E4D7" : "#3A3A36") : (isDark ? "rgba(255,255,255,0.06)" : "rgba(58,58,54,0.06)"),
+                  color: audioSupported() ? (isDark ? "#1F1E1A" : "#F6F1E8") : muted,
+                  fontFamily: "inherit", fontSize: 12, fontWeight: 500,
+                  cursor: audioSupported() ? "pointer" : "default",
+                }}
+              >{audioSupported() ? "Test alarm" : "Unsupported"}</button>
+            </SettingItem>
             <SettingItem label="Notifications" last theme={theme}>
               <button
                 onClick={onToggleNotifications}
@@ -286,7 +315,7 @@ export default function SettingsScreen({ state, update, accents, theme, onClose 
             </SettingItem>
           </div>
           <div style={{ fontSize: 11, color: muted, marginBottom: 20, paddingLeft: 4, lineHeight: 1.5 }}>
-            Capabilities are dormant by default. Imports: <code>src/lib/haptics.ts</code>, <code>src/lib/notifications.ts</code>. Wire them into your fork's logic when needed.
+            Capabilities are dormant by default. Imports: <code>src/lib/haptics.ts</code>, <code>src/lib/audio.ts</code>, <code>src/lib/notifications.ts</code>. Wire them into your fork's logic when needed.
           </div>
         </>
       )}
