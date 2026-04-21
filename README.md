@@ -13,6 +13,22 @@ This is that template. Vite + React + TypeScript + `vite-plugin-pwa`, hosted fre
 - **Nice and simple.** Calm design, clear hierarchy, no dark patterns. Make something you'd want to open.
 - **Share it. Be nice.** Ship it publicly, link friends, don't sell them anything.
 
+## Start your own app
+
+Two paths. Both work.
+
+**Path A — Just clone it and code.** Click **Use this template** on GitHub (or fork), name your repo, and go. No AI required — this is a plain Vite + React + TypeScript project.
+
+**Path B — Design first with Claude Design, then implement.** This template was itself built this way.
+
+1. Mock your app's screens in [Claude Design](https://claude.ai/design). Chat your way to a clickable prototype.
+2. From the design, export the handoff bundle (HTML/CSS/JS) or copy the share URL.
+3. Create a new repo from this template (**Use this template** button on GitHub).
+4. Hand the design bundle or URL to a coding agent (Claude Code, Cursor, whatever) and say: *"based on this design, implement it in this template."* The agent ports the design into `src/App.tsx` + screen components, keeping the splash, theme, install, and deploy plumbing untouched.
+5. Push to `main`, enable Pages, ship.
+
+Claude Design is **not** required — the template is self-sufficient. But if you've already mocked something there, this is the fastest lane from prototype to installed-on-your-phone.
+
 ## Local development
 
 ```bash
