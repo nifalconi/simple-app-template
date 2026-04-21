@@ -27,8 +27,9 @@ Support matrix for everything the template ships with. Verified — not aspirati
 | Haptics (Vibration API) | Tactile feedback on interactions | ✅ | ❌ ignored | ✅ |
 | Audio (Web Audio oscillators) | Beeps, chimes, alarms — no audio files | ✅ | ✅ (after first tap) | ✅ |
 | Notifications | OS-level notification popups | ✅ | ⚠️ installed PWA only | ✅ |
-| Daily reminder | Schedule chime + notification on selected days/hour | ✅ | ✅ open tab | ✅ open tab |
-| Reminder while app closed | Fire even when tab is closed | ❌ | ❌ needs push server | ❌ needs push server |
+| Daily reminder (app open) | Schedule chime + notification while app is in foreground | ✅ | ✅ | ✅ |
+| Daily reminder (app backgrounded) | Fire when tab is behind another / phone-unlocked | ⚠️ | ❌ OS suspends tab | ⚠️ sometimes |
+| Daily reminder (phone locked / closed) | Fire without user interaction | ❌ | ❌ needs push server | ❌ needs push server |
 | Dev panel | Hidden diagnostics overlay (triple-tap `v1.0`) | ✅ | ✅ | ✅ |
 | Auto-deploy to GitHub Pages | Push to `main` → live in ~60s | ✅ | n/a | n/a |
 
