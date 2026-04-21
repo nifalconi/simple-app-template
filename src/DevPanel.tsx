@@ -17,27 +17,48 @@ import {
 import { nextFireTime, formatNextFire } from "./lib/reminder.ts";
 
 // ─────────────────────────────────────────────────────────────
-// Shared bits (local — don't leak into Settings.tsx)
+// Shared UI primitives — used only inside this file
 // ─────────────────────────────────────────────────────────────
+
+function colors(theme: Theme) {
+  const isDark = theme === "dark";
+  return {
+    isDark,
+    fg: isDark ? "#E9E4D7" : "#3A3A36",
+    muted: isDark ? "rgba(233,228,215,0.55)" : "rgba(58,58,54,0.55)",
+    subtle: isDark ? "rgba(233,228,215,0.35)" : "rgba(58,58,54,0.35)",
+    cardBg: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.7)",
+    border: isDark ? "0.5px solid rgba(255,255,255,0.08)" : "0.5px solid rgba(58,58,54,0.08)",
+    rowBorder: isDark ? "0.5px solid rgba(255,255,255,0.06)" : "0.5px solid rgba(58,58,54,0.06)",
+    soft: isDark ? "rgba(255,255,255,0.08)" : "rgba(58,58,54,0.06)",
+  };
+}
 
 interface RowProps {
   label: string;
   children: ReactNode;
   last?: boolean;
   theme: Theme;
+  stack?: boolean;
 }
 
-function Row({ label, children, last, theme }: RowProps) {
-  const isDark = theme === "dark";
+function Row({ label, children, last, theme, stack }: RowProps) {
+  const c = colors(theme);
   return (
     <div style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "14px 20px", gap: 12,
-      borderBottom: last ? "none" : (isDark ? "0.5px solid rgba(255,255,255,0.06)" : "0.5px solid rgba(58,58,54,0.06)"),
-      fontSize: 14, color: isDark ? "#E9E4D7" : "#3A3A36",
+      display: "flex", flexDirection: stack ? "column" : "row",
+      alignItems: stack ? "stretch" : "center",
+      justifyContent: "space-between",
+      padding: "13px 18px", gap: stack ? 6 : 14,
+      borderBottom: last ? "none" : c.rowBorder,
+      fontSize: 14, color: c.fg,
     }}>
-      <span style={{ flexShrink: 0 }}>{label}</span>
-      <div style={{ textAlign: "right", minWidth: 0, overflow: "hidden" }}>{children}</div>
+      <span style={{ flexShrink: 0, fontSize: 14 }}>{label}</span>
+      <div style={{
+        minWidth: 0, textAlign: stack ? "left" : "right",
+        fontSize: 13, color: c.muted,
+        wordBreak: "break-word", lineHeight: 1.4,
+      }}>{children}</div>
     </div>
   );
 }
@@ -51,42 +72,43 @@ interface ActionBtnProps {
 }
 
 function ActionBtn({ onClick, disabled, danger, theme, children }: ActionBtnProps) {
-  const isDark = theme === "dark";
-  const muted = isDark ? "rgba(233,228,215,0.5)" : "#3A3A3680";
-  const bg = disabled
-    ? (isDark ? "rgba(255,255,255,0.06)" : "rgba(58,58,54,0.06)")
-    : danger
-      ? (isDark ? "#C9A9A9" : "#8A3A3A")
-      : (isDark ? "#E9E4D7" : "#3A3A36");
-  const fg = disabled
-    ? muted
-    : danger
-      ? (isDark ? "#1F1E1A" : "#F6F1E8")
-      : (isDark ? "#1F1E1A" : "#F6F1E8");
+  const c = colors(theme);
+  const bg = disabled ? c.soft
+    : danger ? (c.isDark ? "#C9A9A9" : "#8A3A3A")
+    : (c.isDark ? "#E9E4D7" : "#3A3A36");
+  const fg = disabled ? c.muted : (c.isDark ? "#1F1E1A" : "#F6F1E8");
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       style={{
-        padding: "6px 12px", borderRadius: 999, border: "none",
+        padding: "7px 14px", borderRadius: 999, border: "none",
         background: bg, color: fg,
         fontFamily: "inherit", fontSize: 12, fontWeight: 500,
+        letterSpacing: 0.2,
         cursor: disabled ? "default" : "pointer",
       }}
     >{children}</button>
   );
 }
 
-function Mono({ children, muted, theme }: { children: ReactNode; muted?: boolean; theme: Theme }) {
-  const color = muted
-    ? (theme === "dark" ? "rgba(233,228,215,0.5)" : "#3A3A3680")
-    : (theme === "dark" ? "#E9E4D7" : "#3A3A36");
+function Mono({ children, theme }: { children: ReactNode; theme: Theme }) {
+  const c = colors(theme);
   return (
     <span style={{
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-      fontSize: 12, color,
-      whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-      display: "inline-block", maxWidth: "100%",
+      fontSize: 12, color: c.muted,
+    }}>{children}</span>
+  );
+}
+
+function Pill({ children, theme }: { children: ReactNode; theme: Theme }) {
+  const c = colors(theme);
+  return (
+    <span style={{
+      fontSize: 12, color: c.fg,
+      background: c.soft,
+      padding: "3px 10px", borderRadius: 999,
     }}>{children}</span>
   );
 }
@@ -111,19 +133,35 @@ function CapabilitiesSection({ theme }: { theme: Theme }) {
 
   const notifLabel = !notificationsSupported()
     ? "Unsupported"
-    : notifPerm === "granted" ? "Send test"
+    : notifPerm === "granted" ? "Send"
     : notifPerm === "denied" ? "Blocked"
     : "Enable";
 
   return (
-    <Row label="Capabilities" last theme={theme}>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "flex-end" }}>
-        <ActionBtn onClick={() => pulse("medium")} disabled={!hapticsSupported()} theme={theme}>Haptic</ActionBtn>
-        <ActionBtn onClick={() => chime()} disabled={!audioSupported()} theme={theme}>Chime</ActionBtn>
-        <ActionBtn onClick={() => alarm(4)} disabled={!audioSupported()} theme={theme}>Alarm</ActionBtn>
-        <ActionBtn onClick={() => { void onNotifClick(); }} disabled={!notificationsSupported() || notifPerm === "denied"} theme={theme}>{notifLabel}</ActionBtn>
-      </div>
-    </Row>
+    <>
+      <Row label="Haptic" theme={theme}>
+        <ActionBtn onClick={() => pulse("medium")} disabled={!hapticsSupported()} theme={theme}>
+          {hapticsSupported() ? "Pulse" : "Unsupported"}
+        </ActionBtn>
+      </Row>
+      <Row label="Chime" theme={theme}>
+        <ActionBtn onClick={() => chime()} disabled={!audioSupported()} theme={theme}>
+          {audioSupported() ? "Play" : "Unsupported"}
+        </ActionBtn>
+      </Row>
+      <Row label="Alarm" theme={theme}>
+        <ActionBtn onClick={() => alarm(4)} disabled={!audioSupported()} theme={theme}>
+          {audioSupported() ? "Play" : "Unsupported"}
+        </ActionBtn>
+      </Row>
+      <Row label="Notifications" last theme={theme}>
+        <ActionBtn
+          onClick={() => { void onNotifClick(); }}
+          disabled={!notificationsSupported() || notifPerm === "denied"}
+          theme={theme}
+        >{notifLabel}</ActionBtn>
+      </Row>
+    </>
   );
 }
 
@@ -138,8 +176,7 @@ interface RemindersSectionProps {
 }
 
 function RemindersSection({ theme, reminder, update }: RemindersSectionProps) {
-  const isDark = theme === "dark";
-  const fg = isDark ? "#E9E4D7" : "#3A3A36";
+  const c = colors(theme);
 
   const toggleDay = (d: number): void => {
     const days = reminder.days.includes(d)
@@ -167,22 +204,23 @@ function RemindersSection({ theme, reminder, update }: RemindersSectionProps) {
 
   return (
     <>
-      <Row label="Daily reminder" theme={theme}>
+      <Row label="Enabled" theme={theme}>
         <button
           onClick={() => { void toggleEnabled(); }}
           style={{
             width: 44, height: 26, borderRadius: 999, border: "none",
             background: reminder.enabled
-              ? (isDark ? "#B8C4A9" : "#3A3A36")
-              : (isDark ? "rgba(255,255,255,0.14)" : "rgba(58,58,54,0.14)"),
+              ? (c.isDark ? "#B8C4A9" : "#3A3A36")
+              : (c.isDark ? "rgba(255,255,255,0.14)" : "rgba(58,58,54,0.14)"),
             position: "relative", cursor: "pointer", padding: 0,
             transition: "background 200ms ease",
           }}
+          aria-pressed={reminder.enabled}
         >
           <span style={{
             position: "absolute", top: 3, left: reminder.enabled ? 21 : 3,
             width: 20, height: 20, borderRadius: "50%",
-            background: isDark ? "#F6F1E8" : "#fff",
+            background: c.isDark ? "#F6F1E8" : "#fff",
             transition: "left 200ms cubic-bezier(0.3, 0, 0.3, 1)",
             boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
           }} />
@@ -198,13 +236,13 @@ function RemindersSection({ theme, reminder, update }: RemindersSectionProps) {
                 onClick={() => toggleDay(i)}
                 aria-label={`Toggle day ${i}`}
                 style={{
-                  width: 26, height: 26, borderRadius: "50%", border: "none",
+                  width: 28, height: 28, borderRadius: "50%", border: "none",
                   background: active
-                    ? (isDark ? "#E9E4D7" : "#3A3A36")
-                    : (isDark ? "rgba(255,255,255,0.06)" : "rgba(58,58,54,0.06)"),
+                    ? (c.isDark ? "#E9E4D7" : "#3A3A36")
+                    : c.soft,
                   color: active
-                    ? (isDark ? "#1F1E1A" : "#F6F1E8")
-                    : fg,
+                    ? (c.isDark ? "#1F1E1A" : "#F6F1E8")
+                    : c.fg,
                   fontFamily: "inherit", fontSize: 11, fontWeight: 500,
                   cursor: "pointer", padding: 0,
                 }}
@@ -219,8 +257,8 @@ function RemindersSection({ theme, reminder, update }: RemindersSectionProps) {
           onChange={e => update({ ...reminder, hour: Number(e.target.value) })}
           style={{
             padding: "6px 10px", borderRadius: 10, border: "none",
-            background: isDark ? "rgba(255,255,255,0.08)" : "rgba(58,58,54,0.06)",
-            color: fg, fontFamily: "inherit", fontSize: 12,
+            background: c.soft,
+            color: c.fg, fontFamily: "inherit", fontSize: 13,
             cursor: "pointer",
           }}
         >
@@ -230,7 +268,7 @@ function RemindersSection({ theme, reminder, update }: RemindersSectionProps) {
         </select>
       </Row>
       <Row label="Next fire" theme={theme}>
-        <Mono muted theme={theme}>{formatNextFire(next)}</Mono>
+        {formatNextFire(next)}
       </Row>
       <Row label="Fire now" last theme={theme}>
         <ActionBtn onClick={fireNow} disabled={!audioSupported()} theme={theme}>Test</ActionBtn>
@@ -261,15 +299,15 @@ function StorageSection({ theme }: { theme: Theme }) {
 
   return (
     <>
-      <Row label="Storage" theme={theme}>
-        <Mono muted theme={theme}>{keys.length} key{keys.length === 1 ? "" : "s"}</Mono>
+      <Row label="Keys" theme={theme}>
+        <Pill theme={theme}>{keys.length}</Pill>
       </Row>
       {keys.map(k => {
         const v = (() => { try { return localStorage.getItem(k) ?? ""; } catch { return ""; } })();
-        const preview = v.length > 40 ? v.slice(0, 40) + "…" : v;
+        const preview = v.length > 60 ? v.slice(0, 60) + "…" : v;
         return (
-          <Row key={`${k}-${bump}`} label={k} theme={theme}>
-            <Mono muted theme={theme}>{preview}</Mono>
+          <Row key={`${k}-${bump}`} label={k} theme={theme} stack>
+            <Mono theme={theme}>{preview}</Mono>
           </Row>
         );
       })}
@@ -325,15 +363,15 @@ function ServiceWorkerSection({ theme }: { theme: Theme }) {
 
   return (
     <>
-      <Row label="Service Worker" theme={theme}>
-        <Mono muted theme={theme}>{info.supported ? info.state : "unsupported"}</Mono>
+      <Row label="State" theme={theme}>
+        <Pill theme={theme}>{info.supported ? info.state : "unsupported"}</Pill>
       </Row>
       {info.registered && (
-        <Row label="SW scope" theme={theme}>
-          <Mono muted theme={theme}>{info.scope}</Mono>
+        <Row label="Scope" theme={theme} stack>
+          <Mono theme={theme}>{info.scope}</Mono>
         </Row>
       )}
-      <Row label="Unregister SW" last theme={theme}>
+      <Row label="Unregister" last theme={theme}>
         <ActionBtn onClick={() => { void onUnregister(); }} disabled={!info.registered} danger theme={theme}>Unregister</ActionBtn>
       </Row>
     </>
@@ -373,13 +411,13 @@ function PwaStateSection({ theme }: { theme: Theme }) {
   return (
     <>
       <Row label="Display mode" theme={theme}>
-        <Mono muted theme={theme}>{state.displayMode}</Mono>
+        <Pill theme={theme}>{state.displayMode}</Pill>
       </Row>
       <Row label="Installed" theme={theme}>
-        <Mono muted theme={theme}>{state.installed ? "yes" : "no"}</Mono>
+        {state.installed ? "Yes" : "No"}
       </Row>
       <Row label="Install prompt" last theme={theme}>
-        <Mono muted theme={theme}>{state.promptAvailable ? "available" : "not available"}</Mono>
+        {state.promptAvailable ? "Available" : "Not available"}
       </Row>
     </>
   );
@@ -421,13 +459,13 @@ function ViewportSection({ theme }: { theme: Theme }) {
   return (
     <>
       <Row label="Window" theme={theme}>
-        <Mono muted theme={theme}>{vp.w} × {vp.h}</Mono>
+        {vp.w} × {vp.h} px
       </Row>
       <Row label="Pixel ratio" theme={theme}>
-        <Mono muted theme={theme}>{vp.dpr.toFixed(2)}</Mono>
+        {vp.dpr.toFixed(2)}
       </Row>
       <Row label="Orientation" last theme={theme}>
-        <Mono muted theme={theme}>{vp.orientation}</Mono>
+        <Pill theme={theme}>{vp.orientation}</Pill>
       </Row>
     </>
   );
@@ -442,18 +480,16 @@ function BuildInfoSection({ theme }: { theme: Theme }) {
   const builtStr = Number.isNaN(built.getTime())
     ? __APP_BUILT_AT__
     : built.toISOString().replace("T", " ").slice(0, 16) + "Z";
-  const ua = navigator.userAgent;
-  const uaShort = ua.length > 40 ? ua.slice(0, 40) + "…" : ua;
   return (
     <>
       <Row label="Commit" theme={theme}>
-        <Mono muted theme={theme}>{__APP_COMMIT__}</Mono>
+        <Mono theme={theme}>{__APP_COMMIT__}</Mono>
       </Row>
       <Row label="Built at" theme={theme}>
-        <Mono muted theme={theme}>{builtStr}</Mono>
+        <Mono theme={theme}>{builtStr}</Mono>
       </Row>
-      <Row label="User agent" last theme={theme}>
-        <Mono muted theme={theme}>{uaShort}</Mono>
+      <Row label="User agent" last theme={theme} stack>
+        <Mono theme={theme}>{navigator.userAgent}</Mono>
       </Row>
     </>
   );
@@ -465,7 +501,7 @@ function BuildInfoSection({ theme }: { theme: Theme }) {
 
 function ResetSection({ theme }: { theme: Theme }) {
   const onReset = async (): Promise<void> => {
-    if (!confirm("Reset everything? This clears storage, unregisters the service worker, and reloads. Cannot be undone.")) return;
+    if (!confirm("Reset everything? Clears storage, unregisters the service worker, and reloads. Cannot be undone.")) return;
     try { localStorage.clear(); } catch { /* ignored */ }
     try { sessionStorage.clear(); } catch { /* ignored */ }
     if ("serviceWorker" in navigator) {
@@ -480,14 +516,14 @@ function ResetSection({ theme }: { theme: Theme }) {
   };
 
   return (
-    <Row label="Reset app" last theme={theme}>
-      <ActionBtn onClick={() => { void onReset(); }} danger theme={theme}>Reset all</ActionBtn>
+    <Row label="Reset all data" last theme={theme}>
+      <ActionBtn onClick={() => { void onReset(); }} danger theme={theme}>Reset</ActionBtn>
     </Row>
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// DevPanel — composed sections
+// DevPanel — full-screen overlay composing the sections
 // ─────────────────────────────────────────────────────────────
 
 interface DevPanelProps {
@@ -501,20 +537,24 @@ interface DevPanelProps {
 export default function DevPanel({ visible, theme, onClose, reminder, updateReminder }: DevPanelProps) {
   if (!visible) return null;
 
-  const isDark = theme === "dark";
-  const appBg = isDark ? "#1F1E1A" : "#F6F1E8";
-  const cardBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.65)";
-  const border = isDark ? "0.5px solid rgba(255,255,255,0.08)" : "0.5px solid rgba(58,58,54,0.06)";
-  const fg = isDark ? "#E9E4D7" : "#3A3A36";
-  const muted = isDark ? "rgba(233,228,215,0.5)" : "#3A3A3680";
+  const c = colors(theme);
+  const appBg = c.isDark ? "#1F1E1A" : "#F6F1E8";
 
   const Card = ({ title, children }: { title: string; children: ReactNode }) => (
-    <>
-      <div style={{ fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: muted, marginBottom: 8, paddingLeft: 4 }}>{title}</div>
-      <div style={{ background: cardBg, border, borderRadius: 16, marginBottom: 20, overflow: "hidden" }}>
+    <section style={{ marginBottom: 24 }}>
+      <h2 style={{
+        margin: "0 4px 10px",
+        fontSize: 11, fontWeight: 500,
+        letterSpacing: 2, textTransform: "uppercase",
+        color: c.subtle,
+      }}>{title}</h2>
+      <div style={{
+        background: c.cardBg, border: c.border,
+        borderRadius: 16, overflow: "hidden",
+      }}>
         {children}
       </div>
-    </>
+    </section>
   );
 
   return (
@@ -522,51 +562,56 @@ export default function DevPanel({ visible, theme, onClose, reminder, updateRemi
       position: "fixed", inset: 0, zIndex: 150,
       background: appBg,
       fontFamily: '"Geist", -apple-system, system-ui, sans-serif',
-      color: fg,
+      color: c.fg,
       overflowY: "auto",
-      padding: "0 20px",
+      WebkitOverflowScrolling: "touch",
     }}>
-      {/* top bar: title + commit tag + close */}
-      <div style={{
+      {/* sticky header */}
+      <header style={{
         position: "sticky", top: 0, zIndex: 10,
         background: appBg,
-        paddingTop: 62, paddingBottom: 24,
+        borderBottom: c.rowBorder,
+        padding: "52px 20px 16px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-          <div style={{ fontSize: 28, fontWeight: 400, letterSpacing: -0.6 }}>Dev</div>
-          <div style={{
-            fontSize: 11, letterSpacing: 1, textTransform: "uppercase",
-            color: muted, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-          }}>{__APP_COMMIT__}</div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 400, letterSpacing: -0.6 }}>Dev</h1>
+          <span style={{
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+            fontSize: 11, letterSpacing: 0.5, color: c.subtle,
+          }}>{__APP_COMMIT__}</span>
         </div>
         <button
           onClick={onClose}
           style={{
             width: 36, height: 36, borderRadius: 999,
-            background: isDark ? "rgba(255,255,255,0.08)" : "rgba(58,58,54,0.06)",
-            border: "none", cursor: "pointer", padding: 0,
+            background: c.soft, border: "none", cursor: "pointer", padding: 0,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
           title="Close dev panel"
         >
           <svg width="12" height="12" viewBox="0 0 12 12">
-            <path d="M2 2l8 8M10 2l-8 8" stroke={fg} strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M2 2l8 8M10 2l-8 8" stroke={c.fg} strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         </button>
-      </div>
+      </header>
 
-      <Card title="Capabilities"><CapabilitiesSection theme={theme} /></Card>
-      <Card title="Reminders"><RemindersSection theme={theme} reminder={reminder} update={updateReminder} /></Card>
-      <Card title="Storage"><StorageSection theme={theme} /></Card>
-      <Card title="Service Worker"><ServiceWorkerSection theme={theme} /></Card>
-      <Card title="PWA"><PwaStateSection theme={theme} /></Card>
-      <Card title="Viewport"><ViewportSection theme={theme} /></Card>
-      <Card title="Build"><BuildInfoSection theme={theme} /></Card>
-      <Card title="Danger zone"><ResetSection theme={theme} /></Card>
+      <div style={{ padding: "24px 20px 40px" }}>
+        <Card title="Capabilities"><CapabilitiesSection theme={theme} /></Card>
+        <Card title="Reminders"><RemindersSection theme={theme} reminder={reminder} update={updateReminder} /></Card>
+        <Card title="Storage"><StorageSection theme={theme} /></Card>
+        <Card title="Service Worker"><ServiceWorkerSection theme={theme} /></Card>
+        <Card title="PWA"><PwaStateSection theme={theme} /></Card>
+        <Card title="Viewport"><ViewportSection theme={theme} /></Card>
+        <Card title="Build"><BuildInfoSection theme={theme} /></Card>
+        <Card title="Danger zone"><ResetSection theme={theme} /></Card>
 
-      <div style={{ fontSize: 11, color: muted, marginBottom: 40, paddingLeft: 4, lineHeight: 1.5 }}>
-        Capabilities dormant by default. Imports: <code>src/lib/haptics.ts</code>, <code>src/lib/audio.ts</code>, <code>src/lib/notifications.ts</code>. Wire them into your fork's logic when needed.
+        <p style={{
+          fontSize: 11, color: c.subtle,
+          padding: "0 4px", lineHeight: 1.5, margin: 0,
+        }}>
+          Capabilities dormant by default. Import from <code style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>src/lib/*</code> to wire them into your fork.
+        </p>
       </div>
     </div>
   );
