@@ -1,24 +1,17 @@
-# Breathe
+# simple-app-template
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
-A calm, single-purpose breathing PWA. Pick a pattern, follow the orb.
+There are so many apps today that do so little. With modern vibe-coding capabilities, you don't need a startup, a backend, or a store listing to ship something useful. You need a simple template, a GitHub account, and a weekend.
 
-Built from `simple-app-template`: Vite + React + TypeScript + `vite-plugin-pwa`, auto-deploys to GitHub Pages. Zero backend.
+This is that template. Vite + React + TypeScript + `vite-plugin-pwa`, hosted free on GitHub Pages, installable on a phone like any native app. Zero backend, zero tracking, zero cost.
 
-## What this app does
+## Philosophy
 
-Guides slow, deliberate breathing with three patterns: **Calm** (4·7·8), **Box** (4·4·4·4), **Soft** (5·5). Light/Dark/Auto themes, four accent colors, optional haptic pulses.
-
-## Who it's for
-
-Anyone who wants a 60-second reset without fuss — no account, no analytics, no network needed after first load.
-
-## How it works
-
-- **Storage:** user preferences (theme mode, accent) persist in `localStorage` via [src/storage.ts](src/storage.ts).
-- **Offline:** service worker precaches the built bundle; full session works without network after first visit.
-- **External calls:** Geist font from Google Fonts on first load only — fallback to system-ui if offline.
+- **Small.** No more than 2–3 screens. If it needs more, it's a different app.
+- **One thing.** Each app fulfills exactly one purpose. No dashboards, no settings that branch into settings, no feature creep.
+- **Nice and simple.** Calm design, clear hierarchy, no dark patterns. Make something you'd want to open.
+- **Share it. Be nice.** Ship it publicly, link friends, don't sell them anything.
 
 ## Local development
 
@@ -98,7 +91,44 @@ ngrok prints an HTTPS URL like `https://abc123.ngrok-free.app`. Open that URL in
 2. **Edit [src/app.config.ts](src/app.config.ts):** `name`, `shortName`, `description`, `themeColor`, `accentColor`, `purpose`, `audience`.
 3. **Swap core logic:** rewrite [src/App.tsx](src/App.tsx) (and the screen components it imports). [src/main.tsx](src/main.tsx) keeps the `init(root, appConfig)` entry contract intact.
 4. **(Optional) swap icons:** replace [public/icon.svg](public/icon.svg) + [public/favicon.svg](public/favicon.svg). Flat-color tiles only — [CLOUD_RULES.md](CLOUD_RULES.md) invariant #10 forbids logos.
-5. **Enable Pages:** repo → Settings → Pages → *Source: GitHub Actions*. Push to `main`. Action deploys to `https://<user>.github.io/<repo>/`.
+5. **Enable Pages** (see full guide below). Push to `main`. Action deploys to `https://<user>.github.io/<repo>/`.
+
+## Deploy to GitHub Pages (full guide)
+
+The repo ships with a GitHub Action at [.github/workflows/deploy.yml](.github/workflows/deploy.yml) that builds and publishes on every push to `main`. First-time setup is four clicks.
+
+**1. Create the repo on GitHub.** Either "Use this template" at the top of the GitHub page, or fork it, or push a clone to a new repo of your own.
+
+**2. Enable GitHub Pages with Actions as the source.**
+
+- Go to your repo → **Settings** → **Pages** (left sidebar).
+- Under **Build and deployment** → **Source**, pick **GitHub Actions**.
+- That's it. No branch to configure, no `gh-pages` branch needed.
+
+**3. Trigger the deploy.** Any of:
+
+- Push any commit to `main`, or
+- Go to **Actions** → **Deploy to GitHub Pages** → **Run workflow**, or
+- Run `gh workflow run deploy.yml` from your terminal.
+
+**4. Wait ~60 seconds** and open `https://<your-username>.github.io/<repo-name>/`. The URL also shows up in the Action's deploy step output.
+
+### How the Action knows the subpath
+
+GitHub Pages serves this repo at `/<repo>/`, not `/`. The Action injects `VITE_BASE=/${{ github.event.repository.name }}/` at build time, and [vite.config.ts](vite.config.ts) reads that env var into Vite's `base` config. No manual config needed — renaming the repo just works.
+
+### Custom domain (optional)
+
+1. Add a `CNAME` file to `public/` containing your domain (one line, no protocol: `example.com`).
+2. In your DNS, point the domain at `<user>.github.io` (A/AAAA records per [GitHub's docs](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)).
+3. Repo → Settings → Pages → **Custom domain** → enter it.
+4. Tick **Enforce HTTPS** once the cert provisions (~15 min).
+
+### Debugging a failed deploy
+
+- Check the **Actions** tab for red X's. The first failed step explains itself.
+- Common issues: Pages source still set to "Deploy from a branch" (switch it to "GitHub Actions"), or the repo's Pages feature was never enabled (Settings → Pages → enable).
+- After fixing, re-run: `gh workflow run deploy.yml`.
 
 ## Project structure
 
