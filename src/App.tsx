@@ -5,6 +5,7 @@ import HomeScreen from "./Home.tsx";
 import SettingsScreen from "./Settings.tsx";
 import { ACCENTS, DEFAULTS, type Prefs, type Theme, type ThemeMode } from "./constants.ts";
 import { load, save } from "./storage.ts";
+import { useReminder } from "./lib/reminder.ts";
 import type { AppConfig } from "./app.config.ts";
 
 const PREFS_KEY = "prefs";
@@ -72,6 +73,8 @@ export default function App({ appConfig }: AppProps) {
   const [screen, setScreen] = useState<Screen>("home");
 
   const theme = useResolvedTheme(state.themeMode);
+
+  useReminder(state.reminder, appConfig.name);
 
   useEffect(() => { save(PREFS_KEY, state); }, [state]);
 

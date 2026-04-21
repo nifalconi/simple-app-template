@@ -2,7 +2,10 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { usePwaInstall } from "./usePwaInstall.ts";
-import type { AccentKey, Accent, Prefs, Theme, ThemeMode } from "./constants.ts";
+import type { AccentKey, Accent, Prefs, Theme, ThemeMode, Reminder } from "./constants.ts";
+import { DAY_LABELS } from "./constants.ts";
+import { nextFireTime, formatNextFire } from "./lib/reminder.ts";
+import { notificationsSupported, requestPermission } from "./lib/notifications.ts";
 import DevPanel from "./DevPanel.tsx";
 
 interface SettingItemProps {
@@ -57,6 +60,124 @@ function Segmented<T extends string>({ options, value, onChange, theme }: Segmen
         >{label}</button>
       ))}
     </div>
+  );
+}
+
+interface RemindersCardProps {
+  reminder: Reminder;
+  update: (r: Reminder) => void;
+  theme: Theme;
+}
+
+function RemindersCard({ reminder, update, theme }: RemindersCardProps) {
+  const isDark = theme === "dark";
+  const cardBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.65)";
+  const border = isDark ? "0.5px solid rgba(255,255,255,0.08)" : "0.5px solid rgba(58,58,54,0.06)";
+  const fg = isDark ? "#E9E4D7" : "#3A3A36";
+  const muted = isDark ? "rgba(233,228,215,0.5)" : "#3A3A3680";
+
+  const toggleDay = (d: number): void => {
+    const days = reminder.days.includes(d)
+      ? reminder.days.filter(x => x !== d)
+      : [...reminder.days, d].sort((a, b) => a - b);
+    update({ ...reminder, days });
+  };
+
+  const toggleEnabled = async (): Promise<void> => {
+    const next = !reminder.enabled;
+    if (next && notificationsSupported() && Notification.permission === "default") {
+      await requestPermission();
+    }
+    update({ ...reminder, enabled: next });
+  };
+
+  const setHour = (h: number): void => update({ ...reminder, hour: h });
+
+  const next = nextFireTime(reminder);
+
+  return (
+    <>
+      <div style={{ fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: muted, marginBottom: 8, paddingLeft: 4 }}>Reminders</div>
+      <div style={{ background: cardBg, border, borderRadius: 16, marginBottom: 20, overflow: "hidden" }}>
+        <SettingItem label="Daily reminder" theme={theme} last={!reminder.enabled}>
+          <button
+            onClick={() => { void toggleEnabled(); }}
+            style={{
+              width: 44, height: 26, borderRadius: 999, border: "none",
+              background: reminder.enabled
+                ? (isDark ? "#B8C4A9" : "#3A3A36")
+                : (isDark ? "rgba(255,255,255,0.14)" : "rgba(58,58,54,0.14)"),
+              position: "relative", cursor: "pointer", padding: 0,
+              transition: "background 200ms ease",
+            }}
+          >
+            <span style={{
+              position: "absolute", top: 3, left: reminder.enabled ? 21 : 3,
+              width: 20, height: 20, borderRadius: "50%",
+              background: isDark ? "#F6F1E8" : "#fff",
+              transition: "left 200ms cubic-bezier(0.3, 0, 0.3, 1)",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+            }} />
+          </button>
+        </SettingItem>
+
+        {reminder.enabled && (
+          <>
+            <SettingItem label="Days" theme={theme}>
+              <div style={{ display: "flex", gap: 4 }}>
+                {DAY_LABELS.map((lbl, i) => {
+                  const active = reminder.days.includes(i);
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => toggleDay(i)}
+                      aria-label={`Toggle day ${i}`}
+                      style={{
+                        width: 28, height: 28, borderRadius: "50%", border: "none",
+                        background: active
+                          ? (isDark ? "#E9E4D7" : "#3A3A36")
+                          : (isDark ? "rgba(255,255,255,0.06)" : "rgba(58,58,54,0.06)"),
+                        color: active
+                          ? (isDark ? "#1F1E1A" : "#F6F1E8")
+                          : fg,
+                        fontFamily: "inherit", fontSize: 12, fontWeight: 500,
+                        cursor: "pointer", padding: 0,
+                        transition: "background 180ms ease",
+                      }}
+                    >{lbl}</button>
+                  );
+                })}
+              </div>
+            </SettingItem>
+            <SettingItem label="Time" theme={theme}>
+              <select
+                value={reminder.hour}
+                onChange={e => setHour(Number(e.target.value))}
+                style={{
+                  padding: "6px 10px", borderRadius: 10, border: "none",
+                  background: isDark ? "rgba(255,255,255,0.08)" : "rgba(58,58,54,0.06)",
+                  color: fg,
+                  fontFamily: "inherit", fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                {Array.from({ length: 24 }, (_, h) => (
+                  <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>
+                ))}
+              </select>
+            </SettingItem>
+            <SettingItem label="Next" last theme={theme}>
+              <span style={{ fontSize: 13, color: muted }}>{formatNextFire(next)}</span>
+            </SettingItem>
+          </>
+        )}
+      </div>
+      {reminder.enabled && (
+        <div style={{ fontSize: 11, color: muted, marginBottom: 20, paddingLeft: 4, lineHeight: 1.5 }}>
+          Reminders fire while the app is open (or in a backgrounded tab with notifications allowed). Closed-tab reminders need a push server, which this template does not include.
+        </div>
+      )}
+    </>
   );
 }
 
@@ -223,6 +344,12 @@ export default function SettingsScreen({ state, update, accents, theme, onClose 
           )}
         </div>
       </div>
+
+      <RemindersCard
+        reminder={state.reminder}
+        update={(r) => update("reminder", r)}
+        theme={theme}
+      />
 
       <DevPanel visible={devVisible} theme={theme} onClose={() => setDevVisible(false)} />
 
