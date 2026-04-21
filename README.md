@@ -13,6 +13,14 @@ This is that template. Vite + React + TypeScript + `vite-plugin-pwa`, hosted fre
 - **Nice and simple.** Calm design, clear hierarchy, no dark patterns. Make something you'd want to open.
 - **Share it. Be nice.** Ship it publicly, link friends, don't sell them anything.
 
+## What the template gives you
+
+- **Splash + theme + accent** — light / dark / auto + four accent colors, persisted to `localStorage`.
+- **Install button** — captures `beforeinstallprompt`, lets users add the app to their home screen from inside Settings. iOS Safari fallback included.
+- **Offline-first** — service worker precaches the bundle on first visit. Works without network after that.
+- **Hidden Dev panel** — inside Settings, triple-tap the `v1.0` footer. Reveals test buttons for [src/lib/haptics.ts](src/lib/haptics.ts) (Vibration API) and [src/lib/notifications.ts](src/lib/notifications.ts) (Notification API). The capabilities are dormant by default — wire them into your fork's logic when you need them.
+- **Auto-deploy to GitHub Pages** — push to `main`, the Action builds and publishes. Subpath + theme color auto-injected.
+
 ## Start your own app
 
 Two paths. Both work.
