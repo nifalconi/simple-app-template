@@ -3,15 +3,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { usePwaInstall } from "./usePwaInstall.ts";
 import type { AccentKey, Accent, Prefs, Theme, ThemeMode } from "./constants.ts";
-import { hapticsSupported, pulse } from "./lib/haptics.ts";
-import {
-  notificationsSupported,
-  permissionState,
-  requestPermission,
-  notify,
-  type PermissionState,
-} from "./lib/notifications.ts";
-import { audioSupported, chime, alarm } from "./lib/audio.ts";
+import DevPanel from "./DevPanel.tsx";
 
 interface SettingItemProps {
   label: string;
@@ -92,22 +84,6 @@ export default function SettingsScreen({ state, update, accents, theme, onClose 
       setDevVisible(v => !v);
     }
   };
-
-  const [notifPerm, setNotifPerm] = useState<PermissionState>(permissionState());
-  const onToggleNotifications = async (): Promise<void> => {
-    if (!notificationsSupported()) return;
-    if (Notification.permission === "default") {
-      const granted = await requestPermission();
-      setNotifPerm(granted ? "granted" : "denied");
-      if (granted) notify("Notifications enabled", { body: "You'll see messages like this." });
-    } else if (Notification.permission === "granted") {
-      notify("Test notification", { body: "Haptics/notifications are dormant by default." });
-    }
-  };
-
-  const onTestHaptics = (): void => { pulse("medium"); };
-  const onTestChime = (): void => { chime(); };
-  const onTestAlarm = (): void => { alarm(4); };
 
   const onInstallClick = async (): Promise<void> => {
     if (pwaInstalled) return;
@@ -248,77 +224,7 @@ export default function SettingsScreen({ state, update, accents, theme, onClose 
         </div>
       </div>
 
-      {devVisible && (
-        <>
-          <div style={{ fontSize: 11, letterSpacing: 2, textTransform: "uppercase", color: muted, marginBottom: 8, paddingLeft: 4 }}>Dev only</div>
-          <div style={{ background: cardBg, border, borderRadius: 16, marginBottom: 20, overflow: "hidden" }}>
-            <SettingItem label="Haptics" theme={theme}>
-              <button
-                onClick={onTestHaptics}
-                disabled={!hapticsSupported()}
-                style={{
-                  padding: "8px 14px", borderRadius: 999, border: "none",
-                  background: hapticsSupported() ? (isDark ? "#E9E4D7" : "#3A3A36") : (isDark ? "rgba(255,255,255,0.06)" : "rgba(58,58,54,0.06)"),
-                  color: hapticsSupported() ? (isDark ? "#1F1E1A" : "#F6F1E8") : muted,
-                  fontFamily: "inherit", fontSize: 12, fontWeight: 500,
-                  cursor: hapticsSupported() ? "pointer" : "default",
-                }}
-              >{hapticsSupported() ? "Test pulse" : "Unsupported"}</button>
-            </SettingItem>
-            <SettingItem label="Sound" theme={theme}>
-              <button
-                onClick={onTestChime}
-                disabled={!audioSupported()}
-                style={{
-                  padding: "8px 14px", borderRadius: 999, border: "none",
-                  background: audioSupported() ? (isDark ? "#E9E4D7" : "#3A3A36") : (isDark ? "rgba(255,255,255,0.06)" : "rgba(58,58,54,0.06)"),
-                  color: audioSupported() ? (isDark ? "#1F1E1A" : "#F6F1E8") : muted,
-                  fontFamily: "inherit", fontSize: 12, fontWeight: 500,
-                  cursor: audioSupported() ? "pointer" : "default",
-                }}
-              >{audioSupported() ? "Test chime" : "Unsupported"}</button>
-            </SettingItem>
-            <SettingItem label="Alarm" theme={theme}>
-              <button
-                onClick={onTestAlarm}
-                disabled={!audioSupported()}
-                style={{
-                  padding: "8px 14px", borderRadius: 999, border: "none",
-                  background: audioSupported() ? (isDark ? "#E9E4D7" : "#3A3A36") : (isDark ? "rgba(255,255,255,0.06)" : "rgba(58,58,54,0.06)"),
-                  color: audioSupported() ? (isDark ? "#1F1E1A" : "#F6F1E8") : muted,
-                  fontFamily: "inherit", fontSize: 12, fontWeight: 500,
-                  cursor: audioSupported() ? "pointer" : "default",
-                }}
-              >{audioSupported() ? "Test alarm" : "Unsupported"}</button>
-            </SettingItem>
-            <SettingItem label="Notifications" last theme={theme}>
-              <button
-                onClick={onToggleNotifications}
-                disabled={!notificationsSupported() || notifPerm === "denied"}
-                style={{
-                  padding: "8px 14px", borderRadius: 999, border: "none",
-                  background: (notificationsSupported() && notifPerm !== "denied")
-                    ? (isDark ? "#E9E4D7" : "#3A3A36")
-                    : (isDark ? "rgba(255,255,255,0.06)" : "rgba(58,58,54,0.06)"),
-                  color: (notificationsSupported() && notifPerm !== "denied")
-                    ? (isDark ? "#1F1E1A" : "#F6F1E8")
-                    : muted,
-                  fontFamily: "inherit", fontSize: 12, fontWeight: 500,
-                  cursor: (notificationsSupported() && notifPerm !== "denied") ? "pointer" : "default",
-                }}
-              >
-                {!notificationsSupported() ? "Unsupported"
-                  : notifPerm === "granted" ? "Send test"
-                  : notifPerm === "denied" ? "Blocked"
-                  : "Enable"}
-              </button>
-            </SettingItem>
-          </div>
-          <div style={{ fontSize: 11, color: muted, marginBottom: 20, paddingLeft: 4, lineHeight: 1.5 }}>
-            Capabilities are dormant by default. Imports: <code>src/lib/haptics.ts</code>, <code>src/lib/audio.ts</code>, <code>src/lib/notifications.ts</code>. Wire them into your fork's logic when needed.
-          </div>
-        </>
-      )}
+      <DevPanel visible={devVisible} theme={theme} />
 
       <button
         onClick={onDevTap}

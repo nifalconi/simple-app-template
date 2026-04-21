@@ -6,8 +6,16 @@ import { appConfig } from "./src/app.config.ts";
 // Base path: "/" in dev, "/<repo>/" on GitHub Pages (Action injects VITE_BASE).
 const base = process.env.VITE_BASE ?? "/";
 
+// Build metadata surfaced in the Dev panel. GITHUB_SHA is set by the Action.
+const commit = (process.env.GITHUB_SHA ?? "dev").slice(0, 7);
+const builtAt = new Date().toISOString();
+
 export default defineConfig({
   base,
+  define: {
+    __APP_COMMIT__: JSON.stringify(commit),
+    __APP_BUILT_AT__: JSON.stringify(builtAt),
+  },
   preview: {
     // Allow ngrok (and Cloudflare quick-tunnels) without host-header blocks.
     allowedHosts: [".ngrok-free.app", ".ngrok.io", ".trycloudflare.com"],
