@@ -193,10 +193,18 @@ function RemindersSection({ theme, reminder, update }: RemindersSectionProps) {
     update({ ...reminder, enabled: next });
   };
 
-  const fireNow = (): void => {
+  const fireNow = async (): Promise<void> => {
     chime();
-    if (notificationsSupported() && Notification.permission === "granted") {
-      notify("Reminder test", { body: "This is what a scheduled reminder looks like." });
+    if (!notificationsSupported()) return;
+    if (Notification.permission === "default") {
+      const granted = await requestPermission();
+      if (!granted) return;
+    }
+    if (Notification.permission === "granted") {
+      notify("Reminder test", {
+        body: "Fired from the Dev panel. Real reminders look like this.",
+        tag: "reminder-test",
+      });
     }
   };
 
@@ -226,8 +234,12 @@ function RemindersSection({ theme, reminder, update }: RemindersSectionProps) {
           }} />
         </button>
       </Row>
-      <Row label="Days" theme={theme}>
-        <div style={{ display: "flex", gap: 4 }}>
+      <Row label="Days" theme={theme} stack>
+        <div style={{
+          display: "flex", gap: 6, flexWrap: "wrap",
+          justifyContent: "space-between",
+          marginTop: 4,
+        }}>
           {DAY_LABELS.map((lbl, i) => {
             const active = reminder.days.includes(i);
             return (
@@ -236,14 +248,15 @@ function RemindersSection({ theme, reminder, update }: RemindersSectionProps) {
                 onClick={() => toggleDay(i)}
                 aria-label={`Toggle day ${i}`}
                 style={{
-                  width: 28, height: 28, borderRadius: "50%", border: "none",
+                  flex: "1 1 32px",
+                  minWidth: 32, height: 32, borderRadius: "50%", border: "none",
                   background: active
                     ? (c.isDark ? "#E9E4D7" : "#3A3A36")
                     : c.soft,
                   color: active
                     ? (c.isDark ? "#1F1E1A" : "#F6F1E8")
                     : c.fg,
-                  fontFamily: "inherit", fontSize: 11, fontWeight: 500,
+                  fontFamily: "inherit", fontSize: 12, fontWeight: 500,
                   cursor: "pointer", padding: 0,
                 }}
               >{lbl}</button>
@@ -251,15 +264,18 @@ function RemindersSection({ theme, reminder, update }: RemindersSectionProps) {
           })}
         </div>
       </Row>
-      <Row label="Time" theme={theme}>
+      <Row label="Time" theme={theme} stack>
         <select
           value={reminder.hour}
           onChange={e => update({ ...reminder, hour: Number(e.target.value) })}
           style={{
-            padding: "6px 10px", borderRadius: 10, border: "none",
+            marginTop: 4, width: "100%",
+            padding: "10px 14px", borderRadius: 10,
+            border: c.border,
             background: c.soft,
-            color: c.fg, fontFamily: "inherit", fontSize: 13,
+            color: c.fg, fontFamily: "inherit", fontSize: 14,
             cursor: "pointer",
+            WebkitAppearance: "none", appearance: "none",
           }}
         >
           {Array.from({ length: 24 }, (_, h) => (
@@ -271,7 +287,7 @@ function RemindersSection({ theme, reminder, update }: RemindersSectionProps) {
         {formatNextFire(next)}
       </Row>
       <Row label="Fire now" last theme={theme}>
-        <ActionBtn onClick={fireNow} disabled={!audioSupported()} theme={theme}>Test</ActionBtn>
+        <ActionBtn onClick={() => { void fireNow(); }} theme={theme}>Test</ActionBtn>
       </Row>
     </>
   );
